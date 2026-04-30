@@ -1,0 +1,216 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hunter - Buscar Produtos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config={theme:{extend:{colors:{hunter:"#ffcc00"},fontFamily:{sans:["Inter","system-ui","sans-serif"]}}}}</script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body{font-family:"Inter",system-ui,sans-serif;background-image:url("img/im4.jpg");background-size:cover;background-position:center;background-attachment:fixed;}
+        .product-thumb:hover .carousel-popup{display:flex!important;}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+        .fade-in{animation:fadeIn 0.25s ease-out;}
+    </style>
+</head>
+<body class="text-white min-h-screen">
+<div class="min-h-screen bg-black/60 flex flex-col pb-16">
+
+    <!-- NAVBAR -->
+    <nav class="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2 text-amber-400 font-bold text-xl"><i class="bi bi-bullseye text-2xl"></i> Hunter</a>
+            <div class="hidden md:flex items-center gap-5 text-sm font-medium text-gray-300">
+                <a href="index.html" class="hover:text-amber-400 transition-colors"><i class="bi bi-house mr-1"></i>Início</a>
+                <a href="buscar.html" class="text-amber-400 font-semibold"><i class="bi bi-search mr-1"></i>Buscar</a>
+                <a href="alertas.html" class="hover:text-amber-400 transition-colors"><i class="bi bi-bell mr-1"></i>Alertas</a>
+                <a href="feedback.html" class="hover:text-amber-400 transition-colors"><i class="bi bi-chat-dots mr-1"></i>Feedback</a>
+                <a href="configurar.html" class="hover:text-amber-400 transition-colors"><i class="bi bi-gear mr-1"></i>Configurações</a>
+                <a id="loginNav" href="login.html" class="bg-amber-400 hover:bg-amber-300 text-black font-semibold px-4 py-1.5 rounded-full transition-colors"><i class="bi bi-box-arrow-in-right mr-1"></i>Login</a>
+                <a id="logoutNav" href="#" class="hidden hover:text-amber-400 transition-colors"><i class="bi bi-box-arrow-right mr-1"></i>Sair</a>
+            </div>
+            <button id="navToggle" class="md:hidden text-gray-300 text-2xl hover:text-amber-400"><i class="bi bi-list"></i></button>
+        </div>
+        <div id="mobileMenu" class="hidden md:hidden bg-black/95 border-t border-white/10 px-4 py-4 flex flex-col gap-3 text-sm text-gray-300">
+            <a href="index.html" class="hover:text-amber-400 py-1"><i class="bi bi-house mr-2"></i>Início</a>
+            <a href="buscar.html" class="text-amber-400 py-1"><i class="bi bi-search mr-2"></i>Buscar</a>
+            <a href="alertas.html" class="hover:text-amber-400 py-1"><i class="bi bi-bell mr-2"></i>Alertas</a>
+            <a href="feedback.html" class="hover:text-amber-400 py-1"><i class="bi bi-chat-dots mr-2"></i>Feedback</a>
+            <a href="configurar.html" class="hover:text-amber-400 py-1"><i class="bi bi-gear mr-2"></i>Configurações</a>
+            <a id="loginNavMobile" href="login.html" class="hover:text-amber-400 py-1"><i class="bi bi-box-arrow-in-right mr-2"></i>Login</a>
+            <a id="logoutNavMobile" href="#" class="hidden hover:text-amber-400 py-1"><i class="bi bi-box-arrow-right mr-2"></i>Sair</a>
+        </div>
+    </nav>
+
+    <!-- SEARCH BAR -->
+    <div class="max-w-3xl mx-auto w-full px-4 pt-12 pb-6">
+        <div class="bg-zinc-900/90 backdrop-blur-sm border border-zinc-700 rounded-2xl p-8 shadow-2xl text-center">
+            <h2 class="text-3xl font-bold text-white mb-2"><i class="bi bi-search text-amber-400 mr-2"></i>Buscar Produtos</h2>
+            <p class="text-gray-400 text-sm mb-7">Compare preços do Kabum e Mercado Livre em tempo real.</p>
+
+            <!-- Categoria icon -->
+            <div id="imagemCategoria" class="hidden mb-6">
+                <img id="categoriaThumb" src="" alt="" class="w-24 h-24 object-contain mx-auto rounded-2xl bg-white/5 p-2 border border-white/10">
+            </div>
+
+            <form id="searchForm">
+                <div class="flex gap-3">
+                    <input type="text" id="productName" placeholder="Ex: RTX 4070, iPhone 15, Teclado..." required
+                        class="flex-1 bg-zinc-800 border border-zinc-600 text-white rounded-xl px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent placeholder-gray-500 transition">
+                    <button type="submit" class="bg-amber-400 hover:bg-amber-300 text-black font-bold px-6 py-3.5 rounded-xl transition-all hover:scale-[1.02] flex-shrink-0">
+                        <i class="bi bi-search mr-1"></i>Buscar
+                    </button>
+                </div>
+            </form>
+
+            <!-- Loading -->
+            <div id="loading" class="hidden mt-6 flex items-center justify-center gap-3 text-amber-400">
+                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                <span class="text-sm font-medium">Buscando ofertas...</span>
+            </div>
+
+            <p id="noResultsMessage" class="hidden mt-4 text-red-400 text-sm"></p>
+        </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="max-w-7xl mx-auto w-full px-4">
+        <div id="resultCount" class="hidden mb-4 text-gray-400 text-sm font-medium"></div>
+        <div id="resultList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+    </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-md border-t border-white/10 py-3 text-center z-40">
+    <p class="text-gray-500 text-xs">&copy; 2025 Hunter - Caçador de Preços</p>
+</footer>
+
+<script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+<div vw class="enabled"><div vw-access-button class="active"></div><div vw-plugin-wrapper><div class="vw-plugin-top-wrapper"></div></div></div>
+<script>new window.VLibras.Widget("https://vlibras.gov.br/app");</script>
+
+<script>
+    const API_URL = "http://localhost:8000";
+    const token = localStorage.getItem("token");
+    document.getElementById("navToggle").addEventListener("click",()=>{document.getElementById("mobileMenu").classList.toggle("hidden");});
+    if (token) {
+        document.getElementById("loginNav")?.classList.add("hidden");
+        document.getElementById("logoutNav")?.classList.remove("hidden");
+        document.getElementById("loginNavMobile")?.classList.add("hidden");
+        document.getElementById("logoutNavMobile")?.classList.remove("hidden");
+    }
+    function doLogout(e){e?.preventDefault();localStorage.removeItem("token");window.location.href="index.html";}
+    document.getElementById("logoutNav")?.addEventListener("click",doLogout);
+    document.getElementById("logoutNavMobile")?.addEventListener("click",doLogout);
+
+    window.carrosselData = {};
+
+    function atualizarImagemCategoria(busca) {
+        const divImg = document.getElementById("imagemCategoria");
+        const imgEl = document.getElementById("categoriaThumb");
+        const termo = busca.toLowerCase();
+        const mapa = { mouse:"imgfeature/mouse.png", teclado:"imgfeature/teclado.png", monitor:"imgfeature/monitor.png", pendrive:"imgfeature/pendrive.png" };
+        const match = Object.keys(mapa).find(k => termo.includes(k));
+        if (match) { imgEl.src = mapa[match]; divImg.classList.remove("hidden"); }
+        else { divImg.classList.add("hidden"); }
+    }
+
+    document.getElementById("searchForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const nome = document.getElementById("productName").value.trim();
+        atualizarImagemCategoria(nome);
+        const resultList = document.getElementById("resultList");
+        const noResults = document.getElementById("noResultsMessage");
+        const loading = document.getElementById("loading");
+        const count = document.getElementById("resultCount");
+        resultList.innerHTML = "";
+        noResults.classList.add("hidden");
+        count.classList.add("hidden");
+        loading.classList.remove("hidden");
+        try {
+            const r = await fetch(`${API_URL}/buscar-produtos?nome=${encodeURIComponent(nome)}`);
+            loading.classList.add("hidden");
+            if (!r.ok) { noResults.textContent = "Nenhum produto encontrado."; noResults.classList.remove("hidden"); return; }
+            const data = await r.json();
+            const produtos = data.produtos;
+            if (!produtos || produtos.length === 0) { noResults.textContent = "Nenhum produto encontrado."; noResults.classList.remove("hidden"); return; }
+            count.textContent = `${produtos.length} produto${produtos.length !== 1 ? "s" : ""} encontrado${produtos.length !== 1 ? "s" : ""}`;
+            count.classList.remove("hidden");
+            produtos.forEach((prod, index) => {
+                const preco = Number(prod.preco).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+                const isKabum = prod.origem === "Kabum";
+                const imagens = (prod.imagens_urls && prod.imagens_urls.length > 0) ? prod.imagens_urls : (prod.imagem_url ? [prod.imagem_url] : []);
+                const temCarrossel = imagens.length > 1;
+
+                let imgHTML = "";
+                if (imagens.length > 0) {
+                    if (temCarrossel) {
+                        window.carrosselData[index] = { imagens, atual: 0 };
+                        const thumbsHTML = imagens.slice(0,6).map((img,i)=>`<img src="${img}" class="w-9 h-9 object-contain rounded cursor-pointer border-2 ${i===0?"border-amber-400":"border-transparent"} bg-white/5 hover:border-amber-400 transition-colors" onclick="event.stopPropagation();trocarImg(${index},'${img}',this)">`).join("");
+                        imgHTML = `
+                        <div class="relative product-thumb cursor-pointer">
+                            <img src="${imagens[0]}" alt="${prod.nome}" class="w-full h-44 object-contain bg-zinc-800 rounded-t-2xl p-3">
+                            <div class="carousel-popup hidden absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full z-50 bg-zinc-900 border border-amber-400/50 rounded-2xl p-4 shadow-2xl w-72 flex-col items-center gap-3" style="margin-top:-8px">
+                                <img src="${imagens[0]}" id="cp-main-${index}" alt="${prod.nome}" class="w-52 h-52 object-contain rounded-xl bg-zinc-800 p-2">
+                                <div class="flex gap-2 flex-wrap justify-center">${thumbsHTML}</div>
+                                <div class="flex gap-3 w-full">
+                                    <button onclick="event.stopPropagation();navCarrossel(${index},-1)" class="flex-1 bg-amber-400/20 hover:bg-amber-400/40 text-amber-400 rounded-lg py-1.5 text-sm font-bold transition-colors">&#9664;</button>
+                                    <button onclick="event.stopPropagation();navCarrossel(${index},1)" class="flex-1 bg-amber-400/20 hover:bg-amber-400/40 text-amber-400 rounded-lg py-1.5 text-sm font-bold transition-colors">&#9654;</button>
+                                </div>
+                            </div>
+                        </div>`;
+                    } else {
+                        imgHTML = `<img src="${imagens[0]}" alt="${prod.nome}" class="w-full h-44 object-contain bg-zinc-800 rounded-t-2xl p-3">`;
+                    }
+                }
+
+                const card = document.createElement("div");
+                card.className = "bg-zinc-900/95 border border-zinc-700 rounded-2xl overflow-visible hover:border-amber-400/50 hover:-translate-y-1 transition-all duration-200 flex flex-col fade-in";
+                card.innerHTML = `
+                    ${imgHTML}
+                    <div class="p-4 flex flex-col flex-1">
+                        <span class="inline-block text-xs font-bold px-2 py-0.5 rounded-full mb-2 ${isKabum ? "bg-amber-400/20 text-amber-400" : "bg-blue-400/20 text-blue-400"}">${prod.origem}</span>
+                        <h5 class="text-white text-sm font-semibold leading-snug mb-3 line-clamp-3 flex-1">${prod.nome}</h5>
+                        <p class="text-green-400 text-xl font-extrabold mb-4">${preco}</p>
+                        <a href="${prod.link}" target="_blank" rel="noopener noreferrer"
+                            class="block text-center bg-amber-400 hover:bg-amber-300 text-black font-bold py-2.5 rounded-xl text-sm transition-all hover:scale-[1.02]">
+                            <i class="bi bi-box-arrow-up-right mr-1"></i>Ver Produto
+                        </a>
+                    </div>`;
+                resultList.appendChild(card);
+            });
+        } catch(e) {
+            loading.classList.add("hidden");
+            noResults.textContent = "Erro ao buscar produtos. Verifique a conexão com o servidor.";
+            noResults.classList.remove("hidden");
+            console.error(e);
+        }
+    });
+
+    function trocarImg(index, src, thumbEl) {
+        const mainImg = document.getElementById(`cp-main-${index}`);
+        if (mainImg) mainImg.src = src;
+        const allThumbs = thumbEl.parentElement.querySelectorAll("img");
+        allThumbs.forEach(t => t.classList.replace("border-amber-400","border-transparent")||t.classList.remove("border-amber-400"));
+        thumbEl.classList.add("border-amber-400");
+        if (window.carrosselData[index]) {
+            window.carrosselData[index].atual = window.carrosselData[index].imagens.indexOf(src);
+        }
+    }
+
+    function navCarrossel(index, dir) {
+        if (!window.carrosselData[index]) return;
+        const d = window.carrosselData[index];
+        let novo = (d.atual + dir + d.imagens.length) % d.imagens.length;
+        d.atual = novo;
+        const mainImg = document.getElementById(`cp-main-${index}`);
+        if (mainImg) mainImg.src = d.imagens[novo];
+    }
+</script>
+</body>
+</html>
