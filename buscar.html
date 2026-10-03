@@ -13,6 +13,9 @@
         .product-thumb:hover .carousel-popup{display:flex!important;}
         @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
         .fade-in{animation:fadeIn 0.25s ease-out;}
+        .filter-field{width:100%;min-width:0;background:#27272a;border:1px solid #52525b;border-radius:0.75rem;padding:0.75rem;color:#fff;font-size:0.875rem;transition:border-color .2s;}
+        .filter-field:focus{outline:2px solid #fbbf24;outline-offset:2px;border-color:transparent;}
+        .filter-field::placeholder{color:#71717a;}
     </style>
 </head>
 <body class="text-white min-h-screen">
@@ -46,9 +49,9 @@
 
     <!-- SEARCH BAR -->
     <div class="max-w-3xl mx-auto w-full px-4 pt-12 pb-6">
-        <div class="bg-zinc-900/90 backdrop-blur-sm border border-zinc-700 rounded-2xl p-8 shadow-2xl text-center">
+        <div class="bg-zinc-900/90 backdrop-blur-sm border border-zinc-700 rounded-2xl p-5 sm:p-8 shadow-2xl text-center">
             <h2 class="text-3xl font-bold text-white mb-2"><i class="bi bi-search text-amber-400 mr-2"></i>Buscar Produtos</h2>
-            <p class="text-gray-400 text-sm mb-7">Compare preços do Kabum e Mercado Livre em tempo real.</p>
+            <p class="text-gray-400 text-sm mb-7">Encontre o produto e compare as ofertas disponíveis nas lojas.</p>
 
             <!-- Categoria icon -->
             <div id="imagemCategoria" class="hidden mb-6">
@@ -56,13 +59,28 @@
             </div>
 
             <form id="searchForm">
-                <div class="flex gap-3">
+                <div class="flex flex-col sm:flex-row gap-3">
                     <input type="text" id="productName" placeholder="Ex: RTX 4070, iPhone 15, Teclado..." required
-                        class="flex-1 bg-zinc-800 border border-zinc-600 text-white rounded-xl px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent placeholder-gray-500 transition">
+                        aria-label="Nome do produto" class="flex-1 min-w-0 bg-zinc-800 border border-zinc-600 text-white rounded-xl px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent placeholder-gray-500 transition">
                     <button type="submit" class="bg-amber-400 hover:bg-amber-300 text-black font-bold px-6 py-3.5 rounded-xl transition-all hover:scale-[1.02] flex-shrink-0">
                         <i class="bi bi-search mr-1"></i>Buscar
                     </button>
                 </div>
+                <details class="mt-5 text-left border-t border-white/10 pt-4" open>
+                    <summary class="cursor-pointer text-sm font-semibold text-amber-400 flex items-center gap-2"><i class="bi bi-sliders"></i>Refinar pesquisa <span id="filterCount" class="hidden text-xs bg-amber-400/15 px-2 py-0.5 rounded-full"></span><i class="bi bi-chevron-down ml-auto text-xs"></i></summary>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                        <div><label for="filterStore" class="block text-xs font-medium text-gray-400 mb-2">Loja</label>
+                            <select id="filterStore" class="filter-field"><option value="">Todas as lojas</option>Kabum</option><option>Mercado Livre</option><option>Amazon</option><option>Magazine Luiza</option><option>Pichau</option><option>Terabyte</option></select></div>
+                        <div><label for="filterCategory" class="block text-xs font-medium text-gray-400 mb-2">Categoria</label>
+                            <select id="filterCategory" class="filter-field"><option value="">Todas as categorias</option><option value="Placa de video (VGA)">Placa de vídeo</option><option>Processador</option><option value="Placa-mae">Placa-mãe</option><option>Memoria RAM</option><option>SSD</option><option value="HD (Disco Rigido)">HD</option><option>Fonte</option><option>Cooler</option><option>Gabinete</option><option>Monitor</option><option>Teclado</option><option>Mouse</option><option>Pendrive</option></select></div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label for="filterMin" class="block text-xs font-medium text-gray-400 mb-2">Preço mínimo (R$)</label><input id="filterMin" type="number" min="0" step="0.01" placeholder="0,00" class="filter-field"></div>
+                            <div><label for="filterMax" class="block text-xs font-medium text-gray-400 mb-2">Preço máximo (R$)</label><input id="filterMax" type="number" min="0" step="0.01" placeholder="Sem limite" class="filter-field"></div>
+                        </div>
+                        <div><label for="filterSort" class="block text-xs font-medium text-gray-400 mb-2">Ordenar por</label><select id="filterSort" class="filter-field"><option value="relevancia">Mais relevantes</option><option value="menor_preco">Menor preço</option><option value="maior_preco">Maior preço</option><option value="nome">Nome: A a Z</option></select></div>
+                    </div>
+                    <div class="flex items-center justify-between gap-3 mt-4"><p class="text-xs text-gray-500">Escolha os filtros e clique em Buscar.</p><button id="clearFilters" type="button" class="text-xs text-gray-300 hover:text-amber-400 transition-colors whitespace-nowrap"><i class="bi bi-arrow-counterclockwise mr-1"></i>Limpar filtros</button></div>
+                </details>
             </form>
 
             <!-- Loading -->
@@ -74,7 +92,7 @@
                 <span class="text-sm font-medium">Buscando ofertas...</span>
             </div>
 
-            <p id="noResultsMessage" class="hidden mt-4 text-red-400 text-sm"></p>
+            <p id="noResultsMessage" role="status" class="hidden mt-4 text-red-400 text-sm"></p>
         </div>
     </div>
 
@@ -109,6 +127,45 @@
     document.getElementById("logoutNavMobile")?.addEventListener("click",doLogout);
 
     window.carrosselData = {};
+    let searchController;
+    const filterIds = ["filterStore", "filterCategory", "filterMin", "filterMax", "filterSort"];
+    async function carregarFiltros() {
+        try {
+            const response = await fetch(`${API_URL}/filtros-produtos`);
+            if (!response.ok) return;
+            const filtros = await response.json();
+            const nomes = {"Placa de video (VGA)": "Placa de vídeo", "Placa-mae": "Placa-mãe", "Memoria RAM": "Memória RAM", "HD (Disco Rigido)": "HD"};
+            for (const [id, valores, titulo] of [["filterStore", filtros.lojas, "Todas as lojas"], ["filterCategory", filtros.categorias, "Todas as categorias"]]) {
+                const select = document.getElementById(id);
+                const anterior = select.value;
+                select.replaceChildren(new Option(titulo, ""), ...valores.map(valor => new Option(nomes[valor] || valor, valor)));
+                if (valores.includes(anterior)) select.value = anterior;
+            }
+            updateFilterCount();
+        } catch (error) {
+            console.error("Não foi possível carregar as opções de filtros", error);
+        }
+    }
+    carregarFiltros();
+    function updateFilterCount() {
+        const active = filterIds.filter(id => {
+            const value = document.getElementById(id).value;
+            return value !== "" && value !== "relevancia";
+        }).length;
+        const badge = document.getElementById("filterCount");
+        badge.textContent = `${active} ativo${active === 1 ? "" : "s"}`;
+        badge.classList.toggle("hidden", active === 0);
+    }
+    filterIds.forEach(id => document.getElementById(id).addEventListener("input", () => {
+        document.getElementById("filterMax").setCustomValidity("");
+        updateFilterCount();
+    }));
+    document.getElementById("clearFilters").addEventListener("click", () => {
+        filterIds.forEach(id => document.getElementById(id).value = id === "filterSort" ? "relevancia" : "");
+        document.getElementById("filterMax").setCustomValidity("");
+        updateFilterCount();
+        if (document.getElementById("productName").value.trim()) document.getElementById("searchForm").requestSubmit();
+    });
 
     function atualizarImagemCategoria(busca) {
         const divImg = document.getElementById("imagemCategoria");
@@ -123,6 +180,23 @@
     document.getElementById("searchForm").addEventListener("submit", async (e) => {
         e.preventDefault();
         const nome = document.getElementById("productName").value.trim();
+        const minimum = document.getElementById("filterMin");
+        const maximum = document.getElementById("filterMax");
+        maximum.setCustomValidity("");
+        if (minimum.value !== "" && maximum.value !== "" && Number(minimum.value) > Number(maximum.value)) {
+            maximum.setCustomValidity("O preço máximo deve ser maior ou igual ao mínimo.");
+            maximum.reportValidity();
+            return;
+        }
+        const params = new URLSearchParams({nome, ordenar: document.getElementById("filterSort").value});
+        for (const [id, key] of [["filterStore", "loja"], ["filterCategory", "categoria"], ["filterMin", "preco_min"], ["filterMax", "preco_max"]]) {
+            const value = document.getElementById(id).value;
+            if (value !== "") params.set(key, value);
+        }
+        searchController?.abort();
+        const controller = new AbortController();
+        searchController = controller;
+        window.carrosselData = {};
         atualizarImagemCategoria(nome);
         const resultList = document.getElementById("resultList");
         const noResults = document.getElementById("noResultsMessage");
@@ -133,9 +207,9 @@
         count.classList.add("hidden");
         loading.classList.remove("hidden");
         try {
-            const r = await fetch(`${API_URL}/buscar-produtos?nome=${encodeURIComponent(nome)}`);
+            const r = await fetch(`${API_URL}/buscar-produtos?${params}`, {signal: controller.signal});
             loading.classList.add("hidden");
-            if (!r.ok) { noResults.textContent = "Nenhum produto encontrado."; noResults.classList.remove("hidden"); return; }
+            if (!r.ok) { noResults.textContent = r.status === 404 ? "Nenhuma oferta encontrada. Tente ajustar os filtros ou o termo de busca." : "Não foi possível realizar a pesquisa. Tente novamente."; noResults.classList.remove("hidden"); return; }
             const data = await r.json();
             const produtos = data.produtos;
             if (!produtos || produtos.length === 0) { noResults.textContent = "Nenhum produto encontrado."; noResults.classList.remove("hidden"); return; }
@@ -185,6 +259,7 @@
                 resultList.appendChild(card);
             });
         } catch(e) {
+            if (e.name === "AbortError") return;
             loading.classList.add("hidden");
             noResults.textContent = "Erro ao buscar produtos. Verifique a conexão com o servidor.";
             noResults.classList.remove("hidden");
